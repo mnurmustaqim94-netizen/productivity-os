@@ -1402,9 +1402,9 @@ document.addEventListener("click", function (e) {
     if (!h) return;
     const d = el.getAttribute("data-date") || todayISO();
     const prev = (h.history || {})[d];
-    if (prev === "done") h.streak = Math.max(0, (h.streak || 0) - 1);
     if (prev === "miss") h.missCount = Math.max(0, (h.missCount || 0) - 1);
     delete h.history[d];
+    recomputeStreak(h);
   }
   else if (act === "del-mind") {
     S.mindset = S.mindset.filter(function (m) { return m.id !== id; });
@@ -1428,17 +1428,24 @@ function markHabit(h, date, status) {
   h.history = h.history || {};
   const prev = h.history[date];
   if (prev === status) return;
-  if (prev === "done") h.streak = Math.max(0, (h.streak || 0) - 1);
   if (prev === "miss") h.missCount = Math.max(0, (h.missCount || 0) - 1);
 
   h.history[date] = status;
-  if (status === "done") {
-    h.streak = (h.streak || 0) + 1;
-  } else {
-    h.streak = 0;
-    h.missCount = Math.min(6, (h.missCount || 0) + 1);
-  }
-  if (date > todayISO()) h.history[date] = status;
+  if (status === "miss") h.missCount = Math.min(6, (h.missCount || 0) + 1);
+  recomputeStreak(h);
+}
+
+function recomputeStreak(h) {
+  const today = todayISO();
+  const hist = h.history || {};
+  const done = Object.keys(hist)
+    .filter(function (d) { return hist[d] === "done" && d <= today; })
+    .sort();
+  if (!done.length) { h.streak = 0; return; }
+  let d = done[done.length - 1];
+  let s = 0;
+  while (hist[d] === "done") { s++; d = addDays(d, -1); }
+  h.streak = s;
 }
 
 /* =========================================================
