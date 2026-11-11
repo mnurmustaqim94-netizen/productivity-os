@@ -137,6 +137,15 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 .kpi .k-label{font-size:.74rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding-right:52px}
 .kpi .k-value{font-size:1.6rem;font-weight:800;letter-spacing:-.02em;margin-top:6px;font-variant-numeric:tabular-nums}
 .kpi .k-value small{font-size:.72rem;font-weight:600;color:var(--muted);letter-spacing:0;margin-left:3px}
+.kpi .k-value.na{color:#94a3b8;font-weight:600}
+@media(max-width:560px){
+  .kpi-grid.compact{grid-template-columns:1fr 1fr;gap:10px}
+  .kpi-grid.compact .kpi{padding:12px}
+  .kpi-grid.compact .k-value{font-size:1.3rem}
+  .kpi-grid.compact .k-meta{font-size:.68rem;display:block}
+  .kpi-grid.compact .k-meta span{display:block}
+  .kpi-grid.compact .k-label{font-size:.66rem;padding-right:0}
+}
 .kpi .k-meta{display:flex;justify-content:space-between;gap:8px;margin-top:8px;font-size:.72rem;color:var(--muted)}
 .kpi .k-meta b{color:#334155;font-weight:700}
 .kpi .k-badge{position:absolute;top:12px;right:12px}
@@ -230,6 +239,9 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
   overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
 }
 .tabbar::-webkit-scrollbar{display:none}
+@media(max-width:959px){
+  .tabbar{-webkit-mask-image:linear-gradient(to right,#000 0%,#000 88%,transparent 100%);mask-image:linear-gradient(to right,#000 0%,#000 88%,transparent 100%)}
+}
 .tab{
   appearance:none;border:0;background:transparent;font:inherit;color:var(--muted);
   display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 9px;border-radius:11px;
@@ -261,7 +273,9 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 @media print{
   @page{margin:14mm 12mm}
   body{background:#fff;padding:0;font-size:11px}
-  .no-print,.tabbar,.topbar{display:none!important}
+  .no-print,.tabbar,.topbar,.btn,.item-actions,.form,.chip,.pill-chips{display:none!important}
+  .print-hide{display:none!important}
+  .grid.two{grid-template-columns:1fr}
   main{padding:0;max-width:none}
   .view{display:block!important;page-break-inside:avoid}
   .view + .view{page-break-before:always}
@@ -273,6 +287,8 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
   .item{page-break-inside:avoid}
   .kpi-grid{grid-template-columns:1fr 1fr 1fr}
   .kpi{break-inside:avoid}
+  .score-wrap{max-width:560px}
+  .score-lines{max-width:360px}
   th{font-size:8px}
   td{font-size:9px;padding:5px 6px}
   .coach,.quote{background:#fff}
@@ -283,7 +299,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 
 <header class="topbar no-print">
   <div class="brand">
-    <span class="logo">◧</span>
+    <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="21" height="21"><rect x="3" y="13.5" width="3.6" height="6.5" rx="1.2" fill="#34d399"/><rect x="8.4" y="10" width="3.6" height="10" rx="1.2" fill="#34d399"/><rect x="13.8" y="6.5" width="3.6" height="13.5" rx="1.2" fill="#34d399"/><rect x="19.2" y="3" width="3.6" height="17" rx="1.2" fill="#6ee7b7"/></svg></span>
     <div>
       <strong>Productivity OS</strong>
       <small id="todayLabel">—</small>
@@ -311,7 +327,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     </div>
 
     <div class="grid two">
-      <div class="card">
+      <div class="card print-hide">
         <div class="card-head">
           <h2>Log Harian</h2>
           <input type="date" id="logDate" class="input no-print" style="width:auto;padding:6px 9px;font-size:.8rem">
@@ -435,7 +451,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       <p class="sub">Senarai app anda + had masa. Guna sebagai senarai blok untuk AppBlock (telefon) dan LeechBlock (PC).</p>
     </div>
 
-    <div class="kpi-grid no-print" id="appSummary"></div>
+    <div class="kpi-grid compact no-print" id="appSummary"></div>
 
     <div class="card no-print">
       <div class="card-head"><h2>Tambah aplikasi</h2></div>
@@ -585,7 +601,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     <div class="card no-print">
       <div class="card-head">
         <h2>Semakan</h2>
-        <input type="week" id="rv_week" class="input" style="width:auto;padding:6px 9px;font-size:.8rem">
+        <input type="date" id="rv_week" class="input" style="width:auto;padding:6px 9px;font-size:.8rem" title="Pilih mana-mana tarikh dalam minggu itu">
       </div>
       <form class="form" id="reviewForm">
         <label class="full">Kemenangan minggu ini
@@ -600,7 +616,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
         <label>Skor disiplin (1–10)
           <input type="number" id="rv_score" min="1" max="10" inputmode="numeric">
         </label>
-        <label>Deep work minggu ini (jam)
+        <label>Deep work 7 hari (rujukan)
           <input type="text" id="rv_dw" readonly class="mono" style="background:#f8fafc">
         </label>
         <div class="form-actions full">
@@ -1121,13 +1137,15 @@ function renderApps() {
   const by = {};
   S.apps.forEach(function (a) { by[a.cat] = (by[a.cat] || 0) + (Number(a.cap) || 0); });
   const totalCap = Object.keys(by).reduce(function (x, k) { return x + by[k]; }, 0);
+  const distCap = by.gangguan || 0;
   const deepCap = by.deep || 0;
+  const distRag = distCap <= S.settings.distTarget ? "g" : distCap <= S.settings.distTarget * 1.5 ? "a" : "r";
 
   $("appSummary").innerHTML = [
-    ["Jumlah had / hari", num(totalCap) + " min", "", "Had semua app digabung"],
-    ["Deep Work", num(deepCap) + " min", "g", Math.round(deepCap / Math.max(1, totalCap) * 100) + "% daripada jumlah"],
-    ["Gangguan", num(by.gangguan || 0) + " min", "r", "Sasaran ≤ " + S.settings.distTarget + " min"],
-    ["Aplikasi", String(S.apps.length), "", S.apps.filter(function (a) { return a.cat === "gangguan"; }).length + " app gangguan"]
+    ["Had gangguan", num(distCap) + " min", distRag, "Sasaran ≤ " + S.settings.distTarget + " min/hari"],
+    ["Had deep work", num(deepCap) + " min", "g", Math.round(deepCap / Math.max(1, totalCap) * 100) + "% daripada jumlah had"],
+    ["App dipantau", String(S.apps.length), "", S.apps.filter(function (a) { return a.cat === "gangguan"; }).length + " app gangguan"],
+    ["Jumlah had", num(totalCap) + " min", "", "Semua app digabung"]
   ].map(function (k) {
     return '<div class="kpi ' + (k[2] || "") + '">' +
       '<div class="k-label">' + k[0] + "</div>" +
@@ -1175,10 +1193,11 @@ function renderKpis() {
     return '<div class="kpi ' + rag + '">' +
       '<span class="badge ' + rag + ' k-badge">' + ragLabel(rag) + "</span>" +
       '<div class="k-label">' + r.label + "</div>" +
-      '<div class="k-value">' + shown + "<small>" + r.unit + "</small></div>" +
+      '<div class="k-value' + (v == null ? " na" : "") + '">' + shown +
+        (v == null ? "" : "<small>" + r.unit + "</small>") + "</div>" +
       '<div class="k-meta"><span>Sasaran <b>' + (r.dir > 0 ? "≥ " : "≤ ") + r.target + " " + r.unit + "</b></span>" +
       "<span>Min: <b>" + r.min + "</b></span></div>" +
-      cols +
+      (v == null ? '<div class="hint" style="margin-top:6px">Belum ada data log.</div>' : cols) +
       '<div class="hint" style="margin-top:6px">' + r.why + "</div>" +
     "</div>";
   }).join("");
@@ -1297,7 +1316,8 @@ function renderReview() {
     return "<tr><td>" + a + '</td><td class="num"><b>' + b + "</b></td></tr>";
   }
 
-  const ws = $("rv_week").value || wk;
+  const ws = weekKey(parseISO($("rv_week").value || todayISO()));
+  if ($("rv_week").value !== ws) $("rv_week").value = ws;
   const rv = S.reviews.find(function (r) { return r.week === ws; });
   $("rv_wins").value = rv ? rv.wins || "" : "";
   $("rv_lessons").value = rv ? rv.lessons || "" : "";
@@ -1529,7 +1549,7 @@ $("mindForm").addEventListener("submit", function (e) {
 
 $("reviewForm").addEventListener("submit", function (e) {
   e.preventDefault();
-  const wk = $("rv_week").value || weekKey(new Date());
+  const wk = weekKey(parseISO($("rv_week").value || todayISO()));
   const obj = {
     id: uid(),
     week: wk,
@@ -1559,7 +1579,10 @@ $("fineForm").addEventListener("submit", function (e) {
   renderAll();
 });
 
-$("rv_week").addEventListener("change", function () { renderReview(); });
+$("rv_week").addEventListener("change", function () {
+  this.value = weekKey(parseISO(this.value || todayISO()));
+  renderReview();
+});
 
 /* =========================================================
    6. NAV
@@ -1576,6 +1599,7 @@ function showTab(name) {
   document.querySelectorAll(".tab").forEach(function (t) {
     t.classList.toggle("active", t.getAttribute("data-tab") === name);
   });
+  if (location.hash !== "#" + name) history.replaceState(null, "", "#" + name);
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -1659,6 +1683,12 @@ document.addEventListener("afterprint", function () {
   $("m_date").value = todayISO();
   $("rv_week").value = weekKey(new Date());
   renderAll();
+  const hash = (location.hash || "").replace("#", "");
+  if (hash && document.getElementById("v-" + hash)) showTab(hash);
+  window.addEventListener("hashchange", function () {
+    const h = (location.hash || "").replace("#", "");
+    if (h && document.getElementById("v-" + h)) showTab(h);
+  });
   if ("serviceWorker" in navigator && location.protocol === "https:") {
     navigator.serviceWorker.register("./sw.js").catch(function () {});
   }
